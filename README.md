@@ -37,5 +37,5 @@ Penggunaan Eclipse IDE direkomendasikan karena fitur auto-complete dan error. Na
 * **Migrasi ke WebSocket:** Ubah API pesan menjadi WebSocket agar chat lebih responsif dan real-time.
 
 ## ℹ️ Note
-Feel free buat bertanya. Ga perlu panik semua fitur sudah tersedia, tinggal rapih rapih dikit dah nyambungin WebScoket kelar deh. Happy Code :)
+Feel free buat bertanya. Ga perlu panik semua fitur sudah tersedia, tinggal rapih-rapih dikit dan nyambungin WebScoket kelar deh. Happy Code :)
 
