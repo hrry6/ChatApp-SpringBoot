@@ -28,7 +28,6 @@ import sync2.chatApp.model.ChatDetailResponse;
 import sync2.chatApp.model.RemoveGroupMemberRequest;
 import sync2.chatApp.model.UpdateGroupRequest;
 import sync2.chatApp.model.UpdateMemberRoleRequest;
-import sync2.chatApp.model.UpdateUserRequest;
 import sync2.chatApp.repository.ChatMemberRepository;
 import sync2.chatApp.repository.ChatRepository;
 import sync2.chatApp.repository.UserRepository;
