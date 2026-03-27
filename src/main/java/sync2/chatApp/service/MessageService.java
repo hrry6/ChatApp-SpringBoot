@@ -1,5 +1,6 @@
 package sync2.chatApp.service;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,7 +23,6 @@ import sync2.chatApp.entity.Chat;
 import sync2.chatApp.entity.Message;
 import sync2.chatApp.entity.User;
 import sync2.chatApp.model.MessageResponse;
-import sync2.chatApp.model.RegisterUserRequest;
 import sync2.chatApp.model.SendMessageRequest;
 import sync2.chatApp.repository.ChatMemberRepository;
 import sync2.chatApp.repository.ChatRepository;
@@ -64,12 +65,13 @@ public class MessageService {
 	}
 
 	@Transactional
-	public MessageResponse sendMessage(UUID chatId, SendMessageRequest request) {
+	public MessageResponse sendMessage(UUID chatId, SendMessageRequest request, Principal principal){
 		Set<ConstraintViolation<SendMessageRequest>> constraintViolations = validator.validate(request);
 		if (!constraintViolations.isEmpty())
 			throw new ConstraintViolationException(constraintViolations);
 
-		User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Authentication authentication = (Authentication) principal;
+    	User currentUser = (User) authentication.getPrincipal();
 
 		Chat chat = chatRepository.findById(chatId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found"));

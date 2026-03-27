@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, String> {
+public interface UserRepository extends JpaRepository<User, UUID> {
 	Optional<User> findById(UUID id);
 	Optional<User> findByUsername(String username);
 	boolean existsByUsername(String username);
