@@ -44,55 +44,39 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
         .withSockJS();
     }
 
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new ChannelInterceptor() {
-            @Override
-            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+   @Override
+   public void configureClientInboundChannel(ChannelRegistration registration) {
+       registration.interceptors(new ChannelInterceptor() {
+           @Override
+           public Message<?> preSend(Message<?> message, MessageChannel channel) {
+               StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-                StompHeaderAccessor accessor =
-                    MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+               if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+                   String authHeader = accessor.getFirstNativeHeader("Authorization");
 
-                if (accessor != null) {
-                    System.out.println("STOMP Command: " + accessor.getCommand());
-                }
+                   if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                       String token = authHeader.substring(7);
+                       try {
+                           String userIdString = jwtUtil.getUserId(token);
+                           if (userIdString != null) {
+                               User user = userRepository.findById(UUID.fromString(userIdString)).orElse(null);
 
-                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    String authHeader = accessor.getFirstNativeHeader("Authorization");
-
-                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                        String token = authHeader.substring(7);
-
-                        try {
-                            String userIdString = jwtUtil.getUserId(token);
-
-                            if (userIdString != null) {
-                                User user = userRepository
-                                    .findById(UUID.fromString(userIdString))
-                                    .orElse(null);
-
-                                if (user != null) {
-                                    UsernamePasswordAuthenticationToken auth =
-                                        new UsernamePasswordAuthenticationToken(
-                                            user,
-                                            null,
-                                            Collections.emptyList()
-                                        );
-
-                                    accessor.setUser(auth);
-                                    SecurityContextHolder.getContext().setAuthentication(auth);
-
-                                    System.out.println("WebSocket Authenticated User: " + user.getUsername());
-                                }
-                            }
-                        } catch (Exception e) {
-                            System.out.println("WebSocket JWT Error: " + e.getMessage());
-                        }
-                    }
-                }
-
-                return message;
-            }
-        });
-    }
+                               if (user != null) {
+                                   UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                                           user, null, Collections.emptyList());
+                                   
+                                   accessor.setUser(auth); 
+                                   
+                                   SecurityContextHolder.getContext().setAuthentication(auth);
+                               }
+                           }
+                       } catch (Exception e) {
+                           throw new org.springframework.messaging.MessagingException("Unauthorized: " + e.getMessage());
+                       }
+                   }
+               }
+               return message;
+           }
+       });
+   }
 }

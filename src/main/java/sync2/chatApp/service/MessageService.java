@@ -53,7 +53,7 @@ public class MessageService {
 
 		return messages.stream().map(msg -> {
 			MessageResponse.MessageResponseBuilder builder = MessageResponse.builder().id(msg.getId())
-					.content(msg.getContent()).iv(msg.getIv()).type(msg.getType())
+					.content(msg.getContent()).iv(msg.getIv()).type(msg.getType()).sender(msg.getSender().getUsername())
 					.time(msg.getCreatedAt().format(timeFormatter));
 
 			if ("GROUP".equals(chat.getType())) {

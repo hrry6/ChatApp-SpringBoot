@@ -30,57 +30,73 @@
 <pre id="response"></pre>
 
 <script>
-
 let stompClient = null;
+let currentSubscription = null;
 
 function connect() {
-
     const socket = new SockJS("http://localhost:8080/ws-chat");
     stompClient = Stomp.over(socket);
 
     const token = document.getElementById("token").value;
 
     stompClient.connect(
-        {
-            Authorization: "Bearer " + token
-        },
+        { "Authorization": "Bearer " + token },
         function(frame) {
-
             console.log("Connected: " + frame);
-            document.getElementById("response").innerHTML += "Connected\n";
-
+            document.getElementById("response").innerHTML += "--- Connected to WebSocket ---\n";
+        },
+        function(error) {
+            console.error("STOMP Error: " + error);
+            document.getElementById("response").innerHTML += "Connection Error!\n";
         }
     );
 }
 
-function subscribe(){
-
+function subscribe() {
     const chatId = document.getElementById("chatId").value;
 
-    stompClient.subscribe("/topic/message/" + chatId, function(message){
+    if (currentSubscription !== null) {
+        console.log("Unsubscribing from previous chat...");
+        currentSubscription.unsubscribe();
+    }
 
-        document.getElementById("response").innerHTML +=
-            "Received: " + message.body + "\n";
 
+    currentSubscription = stompClient.subscribe("/topic/chat/" + chatId, function(message) {
+
+        const payload = JSON.parse(message.body);
+        
+        const msgData = payload.data ? payload.data : payload; 
+
+        const formattedMsg = `[${msgData.time}] ${msgData.sender}: ${msgData.content}\n`;
+        document.getElementById("response").innerHTML += "Received: " + formattedMsg;
+        
+        console.log("Full DTO received:", msgData);
     });
-
+    
+    document.getElementById("response").innerHTML += "--- Subscribed to chat: " + chatId + " ---\n";
 }
 
-function sendMessage(){
-
+function sendMessage() {
     const chatId = document.getElementById("chatId").value;
-    const message = document.getElementById("message").value;
+    const messageContent = document.getElementById("message").value;
+
+    if (!stompClient || !stompClient.connected) {
+        alert("Connect dulu bosku!");
+        return;
+    }
 
     stompClient.send(
         "/app/send-message/" + chatId,
-        {},
+        { "content-type": "application/json" },
         JSON.stringify({
-            content: message
+            content: messageContent,
+            iv: null,   
+            type: "TEXT"
         })
     );
-
+    
+    document.getElementById("message").value = "";
 }
-
 </script>
 
 </body>

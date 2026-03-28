@@ -11,8 +11,6 @@ import lombok.NoArgsConstructor;
 public class SendMessageRequest {
 	@NotBlank
 	private String content;
-	
 	private String iv;
-	
 	private String type = "TEXT";
 }

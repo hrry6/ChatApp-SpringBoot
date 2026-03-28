@@ -1,8 +1,10 @@
 package sync2.chatApp.controller;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.UUID;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +23,12 @@ public class MessageController {
 
     private final MessageService messageService;
 
+    @GetMapping(path = "/api/chats/messages/{chatId}")
+	public WebResponse<List<MessageResponse>> getMessages(@PathVariable("chatId") UUID chatId) {
+		List<MessageResponse> response = messageService.getChatMessages(chatId);
+		return WebResponse.<List<MessageResponse>>builder().data(response).build();
+	}
+    
     @PostMapping("/api/chats/messages/{chatId}")
     public WebResponse<MessageResponse> sendMessage(
             @PathVariable UUID chatId,
