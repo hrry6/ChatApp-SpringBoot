@@ -22,24 +22,35 @@ import lombok.Setter;
 @Entity
 @Table(name = "messages")
 public class Message {
-    @Id
-    private UUID id;
+	@Id
+	private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_id")
-    private Chat chat;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "chat_id")
+	private Chat chat;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id")
-    private User sender;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "sender_id")
+	private User sender;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
+	@Column(columnDefinition = "TEXT")
+	private String content;
 
-    private String iv;
+	private String iv;
 
-    private String type;
+	private String type;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
+
+//    
+	@Column(length = 20, nullable = false)
+	private String status = "PENDING";
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "bundle_id")
+	private MessageBundle bundle;
+
+	@Column(name = "message_hash")
+	private String messageHash;
 }

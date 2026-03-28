@@ -25,7 +25,7 @@ public class MessageController {
 
     @GetMapping(path = "/api/chats/messages/{chatId}")
 	public WebResponse<List<MessageResponse>> getMessages(@PathVariable("chatId") UUID chatId) {
-		List<MessageResponse> response = messageService.getChatMessages(chatId);
+		List<MessageResponse> response = messageService.getChatMessages(chatId, 10);
 		return WebResponse.<List<MessageResponse>>builder().data(response).build();
 	}
     
