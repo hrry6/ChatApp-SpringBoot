@@ -12,10 +12,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MessageResponse {
-    private UUID id;
-    private String sender;
-    private String content;
-    private String iv;
-    private String type;
-    private String time;
+	private UUID id;
+	private String sender;
+	private String content;
+	private String iv;
+	private String type;
+	private String time;
+
+	private String status;
+	private Long bundleId;
+	private String ipfsCid;
+	private String transactionHash;
 }

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict gvUqDEc5PcUaCdptG50p8gmY07aH6dFahyq4CkHmzhuM5PxmcVXaeueLTAw4abj
+\restrict pax7jqhVVj8Ok9CgmRb7uf9dUcCyrAeZ0SGuxMJm3iBZcr1dfWFOkFQKFAxBRmU
 
 -- Dumped from database version 15.17 (Debian 15.17-1.pgdg13+1)
 -- Dumped by pg_dump version 15.17 (Debian 15.17-1.pgdg13+1)
@@ -68,18 +68,40 @@ CREATE TABLE public.chats (
 ALTER TABLE public.chats OWNER TO postgres;
 
 --
--- Name: message_reads; Type: TABLE; Schema: public; Owner: postgres
+-- Name: message_bundles; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.message_reads (
-    id uuid NOT NULL,
-    message_id uuid,
-    user_id uuid,
-    read_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE public.message_bundles (
+    id bigint NOT NULL,
+    ipfs_cid character varying(255),
+    transaction_hash character varying(255),
+    bundle_hash character varying(255),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
-ALTER TABLE public.message_reads OWNER TO postgres;
+ALTER TABLE public.message_bundles OWNER TO postgres;
+
+--
+-- Name: message_bundles_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.message_bundles_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.message_bundles_id_seq OWNER TO postgres;
+
+--
+-- Name: message_bundles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.message_bundles_id_seq OWNED BY public.message_bundles.id;
+
 
 --
 -- Name: messages; Type: TABLE; Schema: public; Owner: postgres
@@ -92,7 +114,10 @@ CREATE TABLE public.messages (
     content character varying(255) NOT NULL,
     iv character varying(255),
     type character varying(255) DEFAULT 'TEXT'::character varying,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    status character varying(20) DEFAULT 'PENDING'::character varying NOT NULL,
+    message_hash character varying(255),
+    bundle_id bigint
 );
 
 
@@ -112,6 +137,13 @@ CREATE TABLE public.users (
 
 
 ALTER TABLE public.users OWNER TO postgres;
+
+--
+-- Name: message_bundles id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.message_bundles ALTER COLUMN id SET DEFAULT nextval('public.message_bundles_id_seq'::regclass);
+
 
 --
 -- Data for Name: chat_members; Type: TABLE DATA; Schema: public; Owner: postgres
@@ -140,10 +172,12 @@ COPY public.chats (id, type, name, created_by, created_at) FROM stdin;
 
 
 --
--- Data for Name: message_reads; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: message_bundles; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.message_reads (id, message_id, user_id, read_at) FROM stdin;
+COPY public.message_bundles (id, ipfs_cid, transaction_hash, bundle_hash, created_at) FROM stdin;
+1	QmeX8xptpA8UhDkM2zgpuYkeWXyD2kiGAJNT5DtBw75jAr	0xe835b10277cde591b7a6cd6d3e3b364b9afab986002ac6ad568300dbda0aec7f	16586e721a5530c3ea1a86e340b23db3cac99811cc0f1344530a887250ee459c	2026-03-28 23:48:43.545379
+2	QmZCjqY63LYGjadL1ufAZbT7P8XFEWrxPy98tbzzPzDMPt	0x262e3f6ca70f2ee5eae2489136985e6f9083c1e06e84fa555a6b838ec4d98dfa	2940169066ff68453726203d867e29fab78a40494933021d28e45999de3c11db	2026-03-28 23:49:42.318882
 \.
 
 
@@ -151,8 +185,10 @@ COPY public.message_reads (id, message_id, user_id, read_at) FROM stdin;
 -- Data for Name: messages; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.messages (id, chat_id, sender_id, content, iv, type, created_at) FROM stdin;
-8fe39dbb-788e-41ac-bc7c-a9e8e68ece96	850838d1-f958-48ca-a2c6-9ade90a86817	24fdcab5-8ee6-489f-bc1b-eb31547c7e0a	Hallo	123	TEXT	2026-03-27 01:38:59.654983
+COPY public.messages (id, chat_id, sender_id, content, iv, type, created_at, status, message_hash, bundle_id) FROM stdin;
+8fe39dbb-788e-41ac-bc7c-a9e8e68ece96	850838d1-f958-48ca-a2c6-9ade90a86817	24fdcab5-8ee6-489f-bc1b-eb31547c7e0a	Hallo	123	TEXT	2026-03-27 01:38:59.654983	VERIFIED	\N	1
+c7c65f0a-3a27-4ad5-af30-8f1907a47348	3970166c-d31a-42d6-966e-ed71d1d16f0b	24fdcab5-8ee6-489f-bc1b-eb31547c7e0a	Hallo2	123	TEXT	2026-03-28 21:57:25.014207	VERIFIED	ce38e1efb2505af8ed20924b39188c4dcf6a4f6fa17a3fb67ef61ff0de2863e7	1
+d3a75334-b0e2-4a67-9e67-d3890c8ba367	3970166c-d31a-42d6-966e-ed71d1d16f0b	24fdcab5-8ee6-489f-bc1b-eb31547c7e0a	Hallo3	123	TEXT	2026-03-28 23:49:38.546695	VERIFIED	fb91b61a2bd49c7d9705566d43bc32f94c3802ccce9721a948be9a7932978b97	2
 \.
 
 
@@ -166,6 +202,13 @@ e8d7b0fe-73f7-4cc2-896d-6cf065aa7ae6	alpha	alpha@gmail.com	$2a$10$jrtRTOBdVSLq68
 85617e38-0791-464a-bb34-bb628c4c826a	charlie	charlie@gmail.com	$2a$10$83jRHk0tBf121nUv34/rWePFODWt9B0qMONJTiz5cmhPRVlUmoABe	2026-03-26 21:16:29.335185
 12a6eeb7-883c-494f-b0c3-5d7e5e52fd8a	delta	delta@gmail.com	$2a$10$cAeiKRsK.k.wHDqFFpIV.ufKlKaJJmq0I22BheAbqh0jwrq2ufezu	2026-03-26 21:20:35.684719
 \.
+
+
+--
+-- Name: message_bundles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.message_bundles_id_seq', 2, true);
 
 
 --
@@ -193,19 +236,11 @@ ALTER TABLE ONLY public.chats
 
 
 --
--- Name: message_reads message_reads_message_id_user_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: message_bundles message_bundles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.message_reads
-    ADD CONSTRAINT message_reads_message_id_user_id_key UNIQUE (message_id, user_id);
-
-
---
--- Name: message_reads message_reads_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.message_reads
-    ADD CONSTRAINT message_reads_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.message_bundles
+    ADD CONSTRAINT message_bundles_pkey PRIMARY KEY (id);
 
 
 --
@@ -233,6 +268,13 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: idx_messages_status_pending; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_messages_status_pending ON public.messages USING btree (status) WHERE ((status)::text = 'PENDING'::text);
+
+
+--
 -- Name: chat_members chat_members_chat_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -257,19 +299,11 @@ ALTER TABLE ONLY public.chats
 
 
 --
--- Name: message_reads message_reads_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: messages fk_message_bundle; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.message_reads
-    ADD CONSTRAINT message_reads_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.messages(id) ON DELETE CASCADE;
-
-
---
--- Name: message_reads message_reads_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.message_reads
-    ADD CONSTRAINT message_reads_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.messages
+    ADD CONSTRAINT fk_message_bundle FOREIGN KEY (bundle_id) REFERENCES public.message_bundles(id) ON DELETE SET NULL;
 
 
 --
@@ -292,5 +326,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
-\unrestrict gvUqDEc5PcUaCdptG50p8gmY07aH6dFahyq4CkHmzhuM5PxmcVXaeueLTAw4abj
+\unrestrict pax7jqhVVj8Ok9CgmRb7uf9dUcCyrAeZ0SGuxMJm3iBZcr1dfWFOkFQKFAxBRmU
 
