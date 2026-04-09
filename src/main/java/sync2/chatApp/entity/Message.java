@@ -44,7 +44,7 @@ public class Message {
 	private LocalDateTime createdAt;
 
 //    
-	@Column(length = 20, nullable = false)
+	@Column(length = 20, nullable = false, columnDefinition = "varchar(20) default 'PENDING'")
 	private String status = "PENDING";
 
 	@ManyToOne(fetch = FetchType.LAZY)
